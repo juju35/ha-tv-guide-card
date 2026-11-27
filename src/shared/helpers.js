@@ -1,0 +1,55 @@
+// ── Helpers ──────────────────────────────────────────────────────────────────
+import { RC_I18N } from "./i18n/tables.js";
+
+export const rcLang = (i18n, hass, config) => {
+  // The full tag when the card has it (sr-Latn), else its base language (fr-FR → fr, pt-BR → pt), else English.
+  const l = config?.language || hass?.locale?.language || hass?.language || "en";
+  const base = l.split("-")[0];
+  return i18n[l] ? l : i18n[base] ? base : "en";
+};
+
+export const rcT = (i18n, lang, key, vars = {}) => {
+  const s = i18n[lang]?.[key] ?? RC_I18N[lang]?.[key] ?? i18n.en[key] ?? RC_I18N.en[key] ?? key;
+  return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+};
+
+export const rcEsc = (s) =>
+  String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+
+export const rcMoreInfo = (node, entityId) => {
+  const ev = new Event("hass-more-info", { bubbles: true, composed: true });
+  ev.detail = { entityId };
+  node.dispatchEvent(ev);
+};
+
+export const rcNavigate = (path) => {
+  history.pushState(null, "", path);
+  window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
+};
+
+// Wires a card header to its `navigation_path`: click, and Enter on the header itself.
+export const rcBindNav = (head, path) => {
+  head.addEventListener("click", () => rcNavigate(path));
+  head.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter" && ev.target === head) rcNavigate(path);
+  });
+};
+
+// HA's callService already shows a toast when the call fails, then rejects: the rejection is only swallowed here
+// so that it does not end up as "Uncaught (in promise)".
+export const rcCall = (hass, domain, service, data) => Promise.resolve(hass.callService(domain, service, data)).catch(() => {});
+
+// A click inside a dialog (more-info opened from the card, say) is not a click outside the card.
+export const rcInDialog = (ev) => ev.composedPath().some((n) => ["ha-more-info-dialog", "ha-dialog", "dialog"].includes(n.localName));
+
+// `fn()`, computed again only when one of `deps` is no longer the same object (or value) as last time.
+export const rcMemo = (store, key, deps, fn) => {
+  const hit = store[key];
+  if (hit && hit.deps.length === deps.length && hit.deps.every((d, i) => d === deps[i])) return hit.value;
+  const value = fn();
+  store[key] = { deps, value };
+  return value;
+};
