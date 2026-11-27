@@ -143,7 +143,8 @@ class TvGuideCard extends RcCard {
 
   _time(t) {
     try {
-      return tvIntl(this._lang(), { hour: "2-digit", minute: "2-digit" }).format(new Date(t));
+      const lang = this._lang();
+      return tvIntl(lang, tvTimeOptions(lang, this._hass?.locale?.time_format)).format(new Date(t));
     } catch {
       return new Date(t).toTimeString().slice(0, 5);
     }

@@ -183,3 +183,13 @@ export const tvIntl = (lang, opts) => {
   if (!tvIntlCache.has(key)) tvIntlCache.set(key, new Intl.DateTimeFormat(lang, opts));
   return tvIntlCache.get(key);
 };
+
+// The clock format of the HA profile (`locale.time_format`): "12" / "24", else the language's own ("language"), else
+// the system's ("system"). 12-hour times drop the leading zero (9:10 PM), 24-hour ones keep it (09:10).
+export const tvTimeOptions = (lang, timeFormat) => {
+  let h12;
+  if (timeFormat === "12") h12 = true;
+  else if (timeFormat === "24") h12 = false;
+  else h12 = tvIntl(timeFormat === "system" ? undefined : lang, { hour: "numeric" }).resolvedOptions().hour12 === true;
+  return h12 ? { hour: "numeric", minute: "2-digit", hour12: true } : { hour: "2-digit", minute: "2-digit", hour12: false };
+};

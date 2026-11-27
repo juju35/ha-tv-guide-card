@@ -192,8 +192,8 @@ test("full card: tonight's programmes, on air with their progress, the playing c
   assert.deepEqual(json(m.genres), ["movie", "series", "sport", "documentary", "show"]);
   const html = card.shadowRoot.innerHTML;
   assert.match(html, /<span class="bpt">Live<\/span>/);
-  assert.match(html, /<div class="subt">Prime time · 09:00 PM<\/div>/);
-  assert.match(html, /<span class="rk">Channel One · Movie · 09:10 PM – 11:05 PM<\/span><span class="rn">The Evening Travellers<\/span>/);
+  assert.match(html, /<div class="subt">Prime time · 9:00 PM<\/div>/);
+  assert.match(html, /<span class="rk">Channel One · Movie · 9:10 PM – 11:05 PM<\/span><span class="rn">The Evening Travellers<\/span>/);
   assert.match(html, /Then Late Night Talk at 11:05 PM/);
   assert.match(html, /class="row t-movie live playing"/);
   assert.match(html, /aria-label="Play Channel One on Living room TV"/);
@@ -207,7 +207,7 @@ test("before prime time: the evening's programmes, from their first start", asyn
   const m = card._items;
   assert.equal(m.state, "later");
   assert.deepEqual(json(m.rows.map((r) => r.prog.title)), ["The Evening Travellers", "Wild Coastlines", "Coastal Brigade", "Seasonal Cooking", "Cup Final"]);
-  assert.match(card.shadowRoot.innerHTML, /<span class="bpt">From 08:55 PM<\/span>/);
+  assert.match(card.shadowRoot.innerHTML, /<span class="bpt">From 8:55 PM<\/span>/);
   const now = await make("tv-guide-card", { ...ALL, mode: "now" }, makeHass({ scene: "later" }), lib);
   assert.equal(now._items.state, "later", "nothing on the air at 18:30: the next programmes, within 6 h");
   const far = await make("tv-guide-card", { ...ALL, mode: "now" }, makeHass({ scene: "later" }), load({ now: at(9, 0) }));
@@ -279,7 +279,7 @@ test("mini card: the programme to watch, when it ends, the channel and the times
   assert.match(html, /<ha-card class="lvl-live st-live bn">/);
   assert.match(html, /<div class="title">The Evening Travellers<\/div>/);
   assert.match(html, /<span class="bpt">Ends 11:05 PM<\/span>/);
-  assert.match(html, /<button class="subt evt"[^>]*>Channel One · 09:10 PM – 11:05 PM<\/button>/);
+  assert.match(html, /<button class="subt evt"[^>]*>Channel One · 9:10 PM – 11:05 PM<\/button>/);
   card._zoomed = true;
   card._sig = null;
   card._render();
@@ -320,4 +320,16 @@ test("the minute timer draws the card again", async () => {
   tv.window.tick();
   assert.match(card.shadowRoot.innerHTML, /class="rows"/);
   card.disconnectedCallback();
+});
+
+test("times follow the profile's clock: no leading zero in 12-hour, two digits in 24-hour", () => {
+  const d = new Date(2026, 10, 27, 9, 5);
+  const fmt = (lang, tf) => tv.tvIntl(lang, tv.tvTimeOptions(lang, tf)).format(d).replace(/\s/g, " ");
+  assert.equal(fmt("en", "12"), "9:05 AM");
+  assert.equal(fmt("fr", "12"), "9:05 AM");
+  assert.equal(fmt("en", "24"), "09:05");
+  assert.equal(fmt("fr", "24"), "09:05");
+  assert.equal(fmt("en", "language"), "9:05 AM");
+  assert.equal(fmt("fr", "language"), "09:05");
+  assert.equal(fmt("en", undefined), "9:05 AM");
 });
