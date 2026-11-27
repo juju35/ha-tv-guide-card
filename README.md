@@ -21,7 +21,7 @@
   <a href="https://www.home-assistant.io/integrations/calendar/"><img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/home_assistant.png" alt="Home Assistant calendars" height="36"></a>
 </p>
 
-A Lovelace card for **tonight's TV**: the programme of each of your channels at prime time (or what is on now), with a progress bar while on air, genre filters, and a play button that tunes your TV, box or IPTV player.
+A Lovelace card for **tonight's TV**: the programme of each of your channels at prime time (or what is on now), with a progress bar while on air, genre filters, and a play button that tunes your TV, box or media player.
 
 [![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=juju35&repository=ha-tv-guide-card&category=plugin)
 
@@ -61,7 +61,7 @@ The card reads the programmes of these EPG integrations, through one adapter eac
 | <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/home_assistant.png" alt="" height="16"> | [Calendars](https://www.home-assistant.io/integrations/calendar/) (built in) | The events of any calendar — an XMLTV or ICS guide added with [Remote calendar](https://www.home-assistant.io/integrations/remote_calendar/), say |
 | <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/home_assistant.png" alt="" height="16"> | [Template](https://www.home-assistant.io/integrations/template/) / [RESTful](https://www.home-assistant.io/integrations/rest/) sensors (built in) | A list attribute (`programmes`, `programs`, `epg`, `schedule`, `events`, `event`) of `{ title, start, end or duration, genre }`, or the state as the programme on air with its `start` and `end` |
 
-The play button works with any [media player](https://www.home-assistant.io/integrations/media_player/) (`play_media` or `select_source`), a script or an action — [ha-iptv](https://github.com/juju35/ha-iptv) streams, a TV's inputs, a box's remote — and is not needed to show the guide. With [JellyHA](https://github.com/zupancicmarko/JellyHA) <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/jellyha.png" alt="" height="16">, `jellyfin_channel` tunes a Jellyfin Live TV channel on a JellyHA player (`jellyha.play_live_tv_channel`); JellyHA has no programme guide of its own, so the programmes come from one of the sources above.
+The play button works with any [media player](https://www.home-assistant.io/integrations/media_player/) (`play_media` or `select_source`), a script or an action — a TV's inputs, a box's remote, a stream URL — and is not needed to show the guide. With [JellyHA](https://github.com/zupancicmarko/JellyHA) <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/jellyha.png" alt="" height="16">, `jellyfin_channel` tunes a Jellyfin Live TV channel on a JellyHA player (`jellyha.play_live_tv_channel`); JellyHA has no programme guide of its own, so the programmes come from one of the sources above.
 
 Not supported: [kan_program](https://github.com/eyalcha/kan_program) (Israel) still uses `device_state_attributes`, which Home Assistant no longer exposes, so its sensors carry no start or end time.
 
@@ -104,7 +104,7 @@ channels:
       - sensor.channel_one_current
       - sensor.channel_one_upcoming
     name: Channel One
-    media_content_id: http://iptv.example/live/1.ts
+    media_content_id: http://tv.example.local/live/1.ts
     media_content_type: video
   # A Programme TNT FR channel: its name and logo come from the integration; the play button runs a script
   - epg: sensor.programme_tnt_fr_channel_two
