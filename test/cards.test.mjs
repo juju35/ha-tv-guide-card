@@ -89,6 +89,67 @@ test("adapters: XMLTV EPG, Programme TNT FR, EPG (open-epg), a hand-written sens
   assert.deepEqual(titles(["sensor.missing"]), []);
 });
 
+test("adapters: What's On TV, Freeview EPG Splitter, netdaemon-epg", () => {
+  const h = makeHass();
+  const today = at(0, 0);
+  const iso = (hh, mm) => new Date(at(hh, mm)).toISOString();
+  h.states["sensor.epg_whatson"] = {
+    entity_id: "sensor.epg_whatson",
+    state: "Night Film",
+    attributes: {
+      title: "Night Film", start: iso(21, 0), end: iso(23, 0), next_title: "Late Talk", next_start: iso(23, 0), next_end: iso(23, 50),
+      channel_id: "one.xx", channel_name: "Channel W", channel_icon: "https://example.org/w.png",
+      schedule: [
+        { title: "Night Film", start: iso(21, 0), end: iso(23, 0), description: "A movie", image: "https://example.org/f.jpg", on_air: true },
+        { title: "Late Talk", start: iso(23, 0), end: iso(23, 50), description: "", image: null, on_air: false },
+      ],
+    },
+  };
+  h.states["sensor.epg_freely"] = {
+    entity_id: "sensor.epg_freely",
+    state: "21:00 : Quiz Night",
+    attributes: {
+      channel: { id: "chan.uk", name: "Channel F", logo: "img/channels/placeholder.svg" },
+      event: [
+        { startTime: at(21, 0) / 1000, duration: 60, name: "Quiz Night", description: "Questions", image: "img/programmes/placeholder.svg" },
+        { startTime: at(22, 0) / 1000, duration: "PT1H30M", name: "Late News", description: "" },
+      ],
+    },
+  };
+  h.states["sensor.epg_hoerzu_one"] = {
+    entity_id: "sensor.epg_hoerzu_one",
+    state: "Tatort",
+    attributes: { Station: "Station N", Title: "Tatort", BeginTime: "20:15", Duration: 90, Genre: "Krimi", Upcoming: "Tagesthemen", Description: "loading...", DataProvider: "Hoerzu" },
+  };
+  const rows = (id) => json(tv.tvChannelSchedule(h, [id], {}, today).map((p) => [p.title, p.genre, new Date(p.start).getHours(), new Date(p.start).getMinutes(), new Date(p.end).getHours(), new Date(p.end).getMinutes(), p.image]));
+  assert.deepEqual(rows("sensor.epg_whatson"), [
+    ["Night Film", "movie", 21, 0, 23, 0, "https://example.org/f.jpg"],
+    ["Late Talk", "show", 23, 0, 23, 50, null],
+  ]);
+  assert.deepEqual(rows("sensor.epg_freely"), [
+    ["Quiz Night", "show", 21, 0, 22, 0, null],
+    ["Late News", "news", 22, 0, 23, 30, null],
+  ], "the duration gives the end; a relative image is dropped");
+  assert.deepEqual(rows("sensor.epg_hoerzu_one"), [
+    ["Tatort", "show", 20, 15, 21, 45, null],
+    ["Tagesthemen", "show", 21, 45, 22, 45, null],
+  ], "the upcoming title starts when the show on air ends");
+  const chans = tv.tvChannels(h, ["sensor.epg_whatson", "sensor.epg_freely", "sensor.epg_hoerzu_one"]);
+  assert.deepEqual(json(chans.map((c) => [c.name, c.logo])), [
+    ["Channel W", "https://example.org/w.png"],
+    ["Channel F", null],
+    ["Station N", null],
+  ]);
+});
+
+test("times: h:mm AM/PM on a given day; durations in minutes or ISO 8601", () => {
+  assert.equal(tv.tvTime("9:10 PM", at(0, 0)), at(21, 10));
+  assert.equal(tv.tvTime("12:05 am", at(0, 0)), at(0, 5));
+  assert.equal(tv.tvMinutes(45), 45);
+  assert.equal(tv.tvMinutes("PT2H5M"), 125);
+  assert.equal(tv.tvMinutes("soon"), null);
+});
+
 test("an end before the start in HH:MM ends the next day; a programme without an end ends when the next one starts", () => {
   const [p] = tv.tvSchedule([{ title: "Late film", start: "23:30", end: "01:10" }], at(0, 0));
   assert.equal(p.end, at(1, 10, 28));
@@ -177,13 +238,15 @@ test("max_items, show_genres and the genre filter", async () => {
   assert.doesNotMatch(off.shadowRoot.innerHTML, /class="filters"/);
 });
 
-test("the play button: media on the player, a source, a script or an action", async () => {
+test("the play button: media on the player, a source, a JellyHA channel, a script or an action", async () => {
   const hass = makeHass();
   const channels = [
     ...CHANNELS.slice(0, 1),
     { epg: "sensor.tv_channel_five", source: "HDMI 2" },
     { epg: "sensor.epg_channel_three", script: "script.zap_three" },
     { epg: "sensor.programme_tnt_fr_channel_two", action: "remote.send_command", data: { entity_id: "remote.box", command: "2" } },
+    { epg: "sensor.xmltv_channel_one_current", name: "Channel Nine", jellyfin_channel: 9 },
+    { epg: "sensor.xmltv_channel_one_current", name: "Channel Ten", jellyfin_channel: true, player: "media_player.jellyfin_tv" },
   ];
   const card = await make("tv-guide-card", { ...ALL, channels }, hass);
   for (const r of card._items.rows) card._play(r.ch);
@@ -192,6 +255,8 @@ test("the play button: media on the player, a source, a script or an action", as
     ["media_player", "select_source", { entity_id: "media_player.living_room_tv", source: "HDMI 2" }],
     ["script", "turn_on", { entity_id: "script.zap_three" }],
     ["remote", "send_command", { entity_id: "remote.box", command: "2" }],
+    ["jellyha", "play_live_tv_channel", { entity_id: "media_player.living_room_tv", channel_number: "9" }],
+    ["jellyha", "play_live_tv_channel", { entity_id: "media_player.jellyfin_tv", channel_name: "Channel Ten" }],
   ]);
   const none = await make("tv-guide-card", { channels: CHANNELS });
   assert.doesNotMatch(none.shadowRoot.innerHTML, /class="play"/, "no player: no play button");

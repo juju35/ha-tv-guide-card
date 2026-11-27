@@ -14,6 +14,10 @@
   <a href="https://github.com/shadow578/homeassistant_xmltv-epg"><img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/xmltv_epg.svg" alt="XMLTV EPG" height="36"></a>&nbsp;&nbsp;
   <a href="https://github.com/cyclope205/programme-tnt-fr"><img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/programme_tnt_fr.png" alt="Programme TNT FR" height="36"></a>&nbsp;&nbsp;
   <a href="https://github.com/yohaybn/HomeAssistant-EPG"><img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/epg.png" alt="EPG (open-epg.com)" height="36"></a>&nbsp;&nbsp;
+  <a href="https://github.com/janfajessen/What-s-On-TV---EPG-TV-Guide---Home-Assistant"><img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/whatson_tv.png" alt="What's On TV" height="36"></a>&nbsp;&nbsp;
+  <a href="https://github.com/elyobelyob/freely_tv_guide_new"><img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/freely_tv_guide.svg" alt="Freeview EPG Splitter" height="36"></a>&nbsp;&nbsp;
+  <a href="https://github.com/mutzl/netdaemon-epg"><img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/netdaemon.png" alt="netdaemon-epg" height="36"></a>&nbsp;&nbsp;
+  <a href="https://github.com/zupancicmarko/JellyHA"><img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/jellyha.png" alt="JellyHA" height="36"></a>&nbsp;&nbsp;
   <a href="https://www.home-assistant.io/integrations/calendar/"><img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/home_assistant.png" alt="Home Assistant calendars" height="36"></a>
 </p>
 
@@ -51,10 +55,15 @@ The card reads the programmes of these EPG integrations, through one adapter eac
 | <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/xmltv_epg.svg" alt="XMLTV EPG" height="16"> | [XMLTV EPG](https://github.com/shadow578/homeassistant_xmltv-epg) (Marketplace) | Any XMLTV guide: one sensor per channel and mode (current, upcoming, prime time) — `title`, `start`, `end`, `description`, `category` |
 | <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/programme_tnt_fr.png" alt="Programme TNT FR" height="16"> | [Programme TNT FR](https://github.com/cyclope205/programme-tnt-fr) (Marketplace) | French TNT channels: `current`, `next`, `prime_time`, `second_part`, with `channel_name` and `channel_icon` |
 | <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/epg.png" alt="EPG" height="16"> | [EPG](https://github.com/yohaybn/HomeAssistant-EPG) (Marketplace, open-epg.com) | Most of the world: the `today` / `tomorrow` schedules, the programme on air and the next one, `channel_display_name` and `channel_icon` |
+| <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/whatson_tv.png" alt="What's On TV" height="16"> | [What's On TV](https://github.com/janfajessen/What-s-On-TV---EPG-TV-Guide---Home-Assistant) (Marketplace) | Any XMLTV guide, worldwide: one sensor per channel — its `schedule` (`title`, `start`, `end`, `description`, `image`), `next_title`, `channel_name`, `channel_icon` |
+| <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/freely_tv_guide.svg" alt="Freeview EPG Splitter" height="16"> | [Freeview EPG Splitter](https://github.com/elyobelyob/freely_tv_guide_new) (RESTful sensors) | UK Freeview: the `event` list (`name`, `startTime`, `duration`, `description`) and the `channel` name of each REST sensor set up from its README |
+| <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/netdaemon.png" alt="netdaemon-epg" height="16"> | [netdaemon-epg](https://github.com/mutzl/netdaemon-epg) (NetDaemon app) | Germany and Austria (HÖRZU, ORF): `sensor.epg_<provider>_<station>` — the show on air with `BeginTime`, `Duration`, `Genre`, `Description`, and the `Upcoming` title |
 | <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/home_assistant.png" alt="" height="16"> | [Calendars](https://www.home-assistant.io/integrations/calendar/) (built in) | The events of any calendar — an XMLTV or ICS guide added with [Remote calendar](https://www.home-assistant.io/integrations/remote_calendar/), say |
-| <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/home_assistant.png" alt="" height="16"> | [Template](https://www.home-assistant.io/integrations/template/) / [RESTful](https://www.home-assistant.io/integrations/rest/) sensors (built in) | A list attribute (`programmes`, `programs`, `epg`, `schedule`, `events`) of `{ title, start, end, genre }`, or the state as the programme on air with its `start` and `end` |
+| <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/home_assistant.png" alt="" height="16"> | [Template](https://www.home-assistant.io/integrations/template/) / [RESTful](https://www.home-assistant.io/integrations/rest/) sensors (built in) | A list attribute (`programmes`, `programs`, `epg`, `schedule`, `events`, `event`) of `{ title, start, end or duration, genre }`, or the state as the programme on air with its `start` and `end` |
 
-The play button works with any [media player](https://www.home-assistant.io/integrations/media_player/) (`play_media` or `select_source`), a script or an action — [ha-iptv](https://github.com/juju35/ha-iptv) streams, a TV's inputs, a box's remote — and is not needed to show the guide.
+The play button works with any [media player](https://www.home-assistant.io/integrations/media_player/) (`play_media` or `select_source`), a script or an action — [ha-iptv](https://github.com/juju35/ha-iptv) streams, a TV's inputs, a box's remote — and is not needed to show the guide. With [JellyHA](https://github.com/zupancicmarko/JellyHA) <img src="https://raw.githubusercontent.com/juju35/ha-tv-guide-card/main/images/jellyha.png" alt="" height="16">, `jellyfin_channel` tunes a Jellyfin Live TV channel on a JellyHA player (`jellyha.play_live_tv_channel`); JellyHA has no programme guide of its own, so the programmes come from one of the sources above.
+
+Not supported: [kan_program](https://github.com/eyalcha/kan_program) (Israel) still uses `device_state_attributes`, which Home Assistant no longer exposes, so its sensors carry no start or end time.
 
 ## Installation
 
@@ -110,6 +119,10 @@ channels:
     data:
       entity_id: remote.tv_box
       command: "4"
+  # A What's On TV channel, tuned on a Jellyfin Live TV player (JellyHA) by its number
+  - epg: sensor.epg_channel_five
+    player: media_player.jellyfin_living_room
+    jellyfin_channel: 5
 
 # What is on now, on two lines
 type: custom:tv-guide-mini-card
@@ -124,7 +137,7 @@ channels:
 | `show_title` | boolean | `true` | Both: show the title |
 | `show_subtitle` | boolean | `true` | Both: the prime time (or *On now*) under the title |
 | `navigation_path` | string | | Both: a tap on the header opens this dashboard path |
-| `channels` | list | the EPG sensors found, in the card picker | Both, as YAML (in the editor's advanced section too): an entity id, or `epg` (an entity or a list of entities: EPG sensors, calendars), `name`, `number`, `logo`, and what the play button does — `media_content_id` (+ `media_content_type`, default `channel`) or `source` on the player, `script`, or `action` (+ `data`); `player` overrides the card's player for that channel |
+| `channels` | list | the EPG sensors found, in the card picker | Both, as YAML (in the editor's advanced section too): an entity id, or `epg` (an entity or a list of entities: EPG sensors, calendars), `name`, `number`, `logo`, and what the play button does — `media_content_id` (+ `media_content_type`, default `channel`) or `source` on the player, `jellyfin_channel` (a JellyHA Live TV channel number or name, `true` for the channel's name) on a JellyHA player, `script`, or `action` (+ `data`); `player` overrides the card's player for that channel |
 | `player` | entity | | Both: the media player the play buttons tune, and whose channel is highlighted |
 | `mode` | string | `tonight` | Both: `tonight` (the programme on at prime time, or on air once the evening has begun) or `now` |
 | `prime_time` | time | `21:00` | Both: when the evening's programmes begin |
@@ -178,7 +191,7 @@ channels:
 - **Genre**: the guide's own category when it names one, else found in the category, the title and the description; *show* otherwise
 - **Playing channel**: the player is playing (or paused) and its `media_content_id`, `media_channel`, `media_title` or `source` is the channel's
 - **Refresh**: the card redraws on each change of its entities and every minute (progress bars)
-- **Actions**: only the play buttons call one (`media_player.play_media`, `media_player.select_source`, `script.turn_on` or the channel's `action`)
+- **Actions**: only the play buttons call one (`media_player.play_media`, `media_player.select_source`, `jellyha.play_live_tv_channel`, `script.turn_on` or the channel's `action`)
 
 ## Development
 

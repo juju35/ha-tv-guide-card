@@ -170,7 +170,7 @@ class TvGuideCard extends RcCard {
       const pl = ch.player ? h.states[ch.player] : player;
       const pa = pl?.attributes || {};
       const playing = !!pl && ["playing", "on", "paused"].includes(pl.state) && [pa.media_content_id, pa.media_channel, pa.media_title, pa.source].some((v) => v && [ch.media_content_id, ch.source, ch.name].includes(v));
-      const playable = !!(ch.script || ch.action || ((ch.media_content_id || ch.source) && (ch.player || c.player)));
+      const playable = !!(ch.script || ch.action || ((ch.media_content_id || ch.source || (ch.jellyfin_channel != null && ch.jellyfin_channel !== false)) && (ch.player || c.player)));
       return { ch, prog, next, live, playing, playable, pct: live ? Math.round(((now - prog.start) / (prog.end - prog.start)) * 100) : 0 };
     });
     const genres = TV_GENRES.filter((g) => rows.some((r) => r.prog?.genre === g));
@@ -331,7 +331,8 @@ class TvGuideCard extends RcCard {
       });
   }
 
-  // The play button: the channel's script or action, else its media (or source) on its player or the card's.
+  // The play button: the channel's script or action, else its media (or source, or JellyHA Live TV channel) on its
+  // player or the card's.
   _play(ch) {
     if (!ch) return;
     const h = this._hass;
@@ -344,6 +345,12 @@ class TvGuideCard extends RcCard {
     if (!entity_id) return;
     if (ch.media_content_id) return rcCall(h, "media_player", "play_media", { entity_id, media_content_id: ch.media_content_id, media_content_type: ch.media_content_type || "channel" });
     if (ch.source) return rcCall(h, "media_player", "select_source", { entity_id, source: ch.source });
+    // JellyHA (zupancicmarko/JellyHA) tunes a Jellyfin Live TV channel by number, else by name (`true`: the row's).
+    if (ch.jellyfin_channel != null && ch.jellyfin_channel !== false) {
+      const v = ch.jellyfin_channel === true ? ch.name : ch.jellyfin_channel;
+      const key = /^\d+([.-]\d+)?$/.test(String(v)) ? "channel_number" : "channel_name";
+      return rcCall(h, "jellyha", "play_live_tv_channel", { entity_id, [key]: String(v) });
+    }
   }
 
   static styles = `

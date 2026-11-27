@@ -110,7 +110,7 @@ export const load = ({ now } = {}) => {
   const code = [read("shared"), ...cards.map((c) => `{\n${read(c)}}\n`)].join("\n");
   return vm.runInContext(
     `${code}
-    ({ RcCard, RC_I18N, TV_I18N, rcLang, tvGenre, tvTime, tvProgramme, tvSchedule, tvFromEntity, tvChannelSchedule, tvPick, tvPrimeAt, tvChannels, customElements, window,
+    ({ RcCard, RC_I18N, TV_I18N, rcLang, tvGenre, tvTime, tvMinutes, tvImage, tvProgramme, tvSchedule, tvFromEntity, tvChannelSchedule, tvPick, tvPrimeAt, tvChannels, customElements, window,
        cards: Object.fromEntries(${JSON.stringify([...cards, "tv-guide-mini-card"])}.map((t) => [t, customElements.get(t)])) })`,
     ctx,
   );

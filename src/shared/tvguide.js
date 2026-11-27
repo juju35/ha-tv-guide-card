@@ -6,6 +6,13 @@
 //   `second_part` objects (title, start, stop, category, poster), `channel_name` and `channel_icon`;
 // - EPG (yohaybn/HomeAssistant-EPG, open-epg.com): `today` / `tomorrow` schedules of programmes whose start and end
 //   are "HH:MM", the programme on air and the next one in the attributes, `channel_display_name`, `channel_icon`;
+// - What's On TV (janfajessen/What-s-On-TV---EPG-TV-Guide---Home-Assistant, platform whatson_tv): one sensor per
+//   channel, its `schedule` (title, start, end, description, image; ISO times), `next_title`, `channel_name`,
+//   `channel_icon`;
+// - Freeview EPG Splitter (elyobelyob/freely_tv_guide_new): a REST sensor per channel whose `event` list holds
+//   { name, startTime (s since 1970), duration (min), description } and whose `channel` is { name, logo };
+// - netdaemon-epg (mutzl/netdaemon-epg): `sensor.epg_<provider>_<station>`, its state the title on air with
+//   `BeginTime` (local short time), `Duration` (min), `Genre`, `Description`, `Station` and the `Upcoming` title;
 // - a calendar (its events, asked over the REST API): an XMLTV guide turned into a calendar, say;
 // - any other sensor: a list attribute (`programmes`, `programs`, `epg`, `schedule`, `events`) or its state as the
 //   programme on air with its `start` and `end` (a template or REST sensor written by hand).
@@ -29,7 +36,7 @@ export const tvGenre = (given, text) => {
   return TV_GENRES.slice(0, -1).find((k) => TV_MATCH[k].test(t)) || "show";
 };
 
-// A time as ms: an ISO date-time, a date (local midnight), "HH:MM" on the day `base` (ms, local midnight), seconds
+// A time as ms: an ISO date-time, a date (local midnight), "HH:MM" or "h:mm AM/PM" on the day `base` (ms, local midnight), seconds
 // or ms since 1970, a Date, a calendar's { dateTime } / { date }. null when it is none of them.
 export const tvTime = (v, base) => {
   if (v == null || v === "") return null;
@@ -40,11 +47,13 @@ export const tvTime = (v, base) => {
     return n < 1e11 ? n * 1000 : n;
   }
   const s = String(v).trim();
-  const hm = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(s);
+  const hm = /^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*([ap])?\.?\s*m?\.?$/i.exec(s);
   if (hm) {
     if (base == null) return null;
+    const ap = hm[3]?.toLowerCase();
+    const h = ap ? (Number(hm[1]) % 12) + (ap === "p" ? 12 : 0) : Number(hm[1]);
     const d = new Date(base);
-    d.setHours(Number(hm[1]), Number(hm[2]), 0, 0);
+    d.setHours(h, Number(hm[2]), 0, 0);
     return d.getTime();
   }
   const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
@@ -53,19 +62,33 @@ export const tvTime = (v, base) => {
   return Number.isNaN(t) ? null : t;
 };
 
+// A duration in minutes: a number, "90", or ISO 8601 ("PT1H30M"); null when it is none of them.
+export const tvMinutes = (v) => {
+  if (v == null || v === "") return null;
+  if (typeof v === "number" || /^\d+(\.\d+)?$/.test(String(v))) return Number(v);
+  const m = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/i.exec(String(v).trim());
+  return m && m[0].length > 2 ? Number(m[1] || 0) * 60 + Number(m[2] || 0) + Number(m[3] || 0) / 60 : null;
+};
+
+// An image usable as is: a web address, an absolute path or a data URI (the relative paths some feeds give point
+// into their own repository and would not load).
+export const tvImage = (v) => (typeof v === "string" && /^(https?:\/\/|\/|data:image\/)/i.test(v) ? v : null);
+
 // One programme from a list item (sensor attributes) or a calendar event; null without a title or a start.
 // `base`: the day (local midnight) of "HH:MM" times; an end earlier than the start is on the next day.
 export const tvProgramme = (p, base) => {
   if (!p || typeof p !== "object") return null;
-  const title = p.title ?? p.summary ?? p.name ?? p.programme ?? p.program;
-  const start = tvTime(p.start ?? p.start_time ?? p.begin ?? p.from, base);
+  const title = p.title ?? p.Title ?? p.summary ?? p.name ?? p.programme ?? p.program;
+  const start = tvTime(p.start ?? p.start_time ?? p.startTime ?? p.begin ?? p.begin_time ?? p.BeginTime ?? p.from, base);
   if (!title || start == null) return null;
-  let end = tvTime(p.end ?? p.end_time ?? p.stop ?? p.until ?? p.to, base);
+  let end = tvTime(p.end ?? p.end_time ?? p.endTime ?? p.stop ?? p.until ?? p.to, base);
+  const dur = tvMinutes(p.duration ?? p.Duration);
+  if (end == null && dur) end = start + dur * 60000;
   if (end != null && end <= start && base != null) end += 86400000;
-  const desc = String(p.description ?? p.desc ?? p.subtitle ?? p.sub_title ?? "");
+  const desc = String(p.description ?? p.Description ?? p.desc ?? p.synopsis ?? p.subtitle ?? p.sub_title ?? "");
   const cat = Array.isArray(p.category) ? p.category[0] : p.category;
-  const genre = tvGenre(p.genre ?? cat ?? p.categories?.[0], `${title} ${desc}`);
-  return { title: String(title), start, end: end != null && end > start ? end : null, genre, desc, image: p.poster ?? p.image ?? p.icon ?? null };
+  const genre = tvGenre(p.genre ?? p.Genre ?? cat ?? p.categories?.[0], `${title} ${desc}`);
+  return { title: String(title), start, end: end != null && end > start ? end : null, genre, desc, image: tvImage(p.poster ?? p.image ?? p.icon) };
 };
 
 // Sorted by start; a programme without an end ends when the next one starts.
@@ -80,7 +103,7 @@ export const tvSchedule = (list, base) => {
   return out;
 };
 
-const TV_LISTS = ["programmes", "programs", "epg", "schedule", "events"];
+const TV_LISTS = ["programmes", "programs", "epg", "schedule", "events", "event"];
 // Programme TNT FR's programme objects.
 const TV_SLOTS = ["current", "next", "prime_time", "second_part"];
 
@@ -98,8 +121,15 @@ export const tvFromEntity = (st, today) => {
   }
   const slots = TV_SLOTS.filter((k) => a[k] && typeof a[k] === "object");
   if (slots.length) return tvSchedule(slots.map((k) => a[k]), today);
-  const now = { ...a, title: a.title ?? a.media_title ?? st.state };
-  const next = a.next_program_title ? { title: a.next_program_title, start: a.next_program_start_time, end: a.next_program_end_time, desc: a.next_program_desc } : null;
+  const now = { ...a, title: a.title ?? a.Title ?? a.media_title ?? st.state };
+  // The next programme: EPG's next_program_*, What's On TV's next_*, or netdaemon-epg's `Upcoming` title alone
+  // (it starts when the one on air ends).
+  const nextTitle = a.next_program_title ?? a.next_title ?? a.Upcoming ?? a.upcoming;
+  let next = null;
+  if (nextTitle) {
+    next = { title: nextTitle, start: a.next_program_start_time ?? a.next_start, end: a.next_program_end_time ?? a.next_end, desc: a.next_program_desc ?? a.next_description };
+    if (next.start == null) next.start = tvProgramme(now, today)?.end ?? null;
+  }
   return tvSchedule(next ? [now, next] : [now], today);
 };
 
@@ -129,7 +159,8 @@ export const tvPrimeAt = (value, now) => {
 
 // The `channels` of the config: an entity id, or { epg (an entity or a list), name, number, logo, and what the play
 // button does: media_content_id (+ media_content_type) or source on the player, or script / action (+ data) }.
-// The name and the logo default to the entity's (the integrations' channel_name, channel_display_name, channel_icon).
+// The name and the logo default to the entity's (the integrations' channel_name, channel_display_name, channel_icon,
+// Freeview EPG Splitter's `channel` object, netdaemon-epg's `Station`).
 export const tvChannels = (hass, list) =>
   (Array.isArray(list) ? list : [])
     .map((c, i) => {
@@ -137,9 +168,11 @@ export const tvChannels = (hass, list) =>
       if (!ch) return null;
       const ids = (Array.isArray(ch.epg) ? ch.epg : [ch.epg]).filter((id) => typeof id === "string" && id.includes("."));
       const a = hass?.states?.[ids[0]]?.attributes || {};
-      const name = String(ch.name ?? a.channel_name ?? a.channel_display_name ?? a.channel ?? a.friendly_name ?? ids[0] ?? "");
+      const co = a.channel && typeof a.channel === "object" ? a.channel : null;
+      const name = String(ch.name ?? a.channel_name ?? a.channel_display_name ?? co?.name ?? (co ? null : a.channel) ?? a.Station ?? a.friendly_name ?? ids[0] ?? "");
       if (!name) return null;
-      return { ...ch, ids, key: String(i), name, number: ch.number ?? i + 1, logo: ch.logo ?? a.channel_icon ?? a.entity_picture ?? null };
+      const logo = ch.logo ?? tvImage(a.channel_icon) ?? tvImage(co?.logo) ?? tvImage(a.entity_picture);
+      return { ...ch, ids, key: String(i), name, number: ch.number ?? i + 1, logo: logo ?? null };
     })
     .filter(Boolean);
 
