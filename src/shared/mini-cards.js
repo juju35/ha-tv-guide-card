@@ -235,5 +235,5 @@ export const rcRegister = (card, editor, name, description) => {
 };
 
 if (!customElements.get("tv-guide-card")) {
-  console.info(`%c HA-TV-GUIDE-CARD %c v${RC_VERSION} `, "background:#7048e8;color:#fff;font-weight:700", "");
+  console.info(`%c HA-TV-GUIDE-CARD %c v${RC_VERSION} `, "background:#ae3ec9;color:#fff;font-weight:700", "");
 }

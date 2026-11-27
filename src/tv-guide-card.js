@@ -354,9 +354,9 @@ class TvGuideCard extends RcCard {
   }
 
   static styles = `
-    ha-card { --c: #7048e8; }
-    ha-card.lvl-live { --c: #7048e8; } ha-card.lvl-later { --c: #1c7ed6; } ha-card.lvl-none { --c: var(--rc-idle); }
-    .t-movie { --t: #7048e8; } .t-series { --t: #0c8599; } .t-sport { --t: #2f9e44; } .t-kids { --t: #e67700; }
+    ha-card { --c: #ae3ec9; }
+    ha-card.lvl-live { --c: #ae3ec9; } ha-card.lvl-later { --c: #1c7ed6; } ha-card.lvl-none { --c: var(--rc-idle); }
+    .t-movie { --t: #ae3ec9; } .t-series { --t: #0c8599; } .t-sport { --t: #2f9e44; } .t-kids { --t: #e67700; }
     .t-news { --t: #1c7ed6; } .t-documentary { --t: #5c940d; } .t-show { --t: #d6336c; }
     .tt { flex: 1 1 0; min-width: 5ch; display: flex; flex-direction: column; }
     .tt .title { flex: none; }
